@@ -7,6 +7,7 @@ import { MEDIA_SIZE_LIMIT_BYTES, SELF_CHAT_ID } from '@/shared/config';
 import { getMessages, saveChat, saveMessage } from '@/shared/db';
 import { createId } from '@/shared/lib/createId';
 import { connectSocket, sendSocketMessage } from '@/services/websocket/client';
+import { decryptTextMessage, encryptTextMessage } from '@/modules/e2ee/crypto';
 import type { LocalIdentity } from '@/types/identity';
 import type { Chat, Message, MessageType, RelayPayload } from '@/types/message';
 
@@ -112,6 +113,8 @@ function toRelayPayload(message: Message): RelayPayload {
     base64Payload: message.base64Payload,
     mimeType: message.mimeType,
     duration: message.duration,
+    isEncrypted: message.isEncrypted,
+    senderPublicKey: message.senderPublicKey,
   };
 }
 
@@ -140,7 +143,7 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
     await saveChat(chat);
     const messages = await getMessages(chat.id);
 
-    connectSocket(identity.deviceId, {
+    connectSocket(identity.deviceId, identity.sessionToken, {
       onMessage: (payload) => {
         void get().receiveRelayMessage(payload);
       },
@@ -185,8 +188,21 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
       return;
     }
 
-    const message = await createOutgoingMessage(identity, 'text', { text: trimmedText });
-    const sent = sendSocketMessage(identity.deviceId, toRelayPayload(message));
+    const recipientPublicKey = identity.publicKey;
+    const encryptedText = recipientPublicKey
+      ? await encryptTextMessage(trimmedText, recipientPublicKey)
+      : trimmedText;
+    const message = await createOutgoingMessage(identity, 'text', {
+      text: trimmedText,
+      isEncrypted: Boolean(recipientPublicKey),
+      senderPublicKey: identity.publicKey,
+    });
+    const sent = sendSocketMessage(identity.deviceId, {
+      ...toRelayPayload(message),
+      text: encryptedText,
+      isEncrypted: Boolean(recipientPublicKey),
+      senderPublicKey: identity.publicKey,
+    });
     const finalMessage = { ...message, status: sent ? ('sent' as const) : ('failed' as const) };
 
     await saveMessage(finalMessage);
@@ -293,12 +309,15 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
     const fileUri = payload.base64Payload
       ? await writeBase64ToLocalFile(payload.id, payload.base64Payload, extensionByType[payload.type])
       : undefined;
+    const decryptedText = payload.isEncrypted && payload.text && payload.senderPublicKey
+      ? await decryptTextMessage(payload.text, payload.senderPublicKey)
+      : payload.text;
     const message: Message = {
       id: payload.id,
       chatId: payload.chatId,
       from: payload.from,
       to: payload.to,
-      text: payload.text,
+      text: decryptedText ?? '[Не удалось расшифровать сообщение]',
       type: payload.type,
       timestamp: payload.timestamp,
       isOutgoing: payload.from === get().identity?.deviceId,
@@ -307,6 +326,8 @@ export const useMessagingStore = create<MessagingState>((set, get) => ({
       mimeType: payload.mimeType,
       duration: payload.duration,
       status: 'delivered',
+      isEncrypted: Boolean(payload.isEncrypted),
+      senderPublicKey: payload.senderPublicKey,
     };
 
     await saveMessage(message);

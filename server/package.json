@@ -7,9 +7,13 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^3.3.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
     "cors": "latest",
     "dotenv": "latest",
     "express": "latest",
+    "express-rate-limit": "^8.5.2",
     "messengerapp": "file:..",
     "socket.io": "latest"
   }

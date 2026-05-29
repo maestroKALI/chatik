@@ -21,13 +21,16 @@ let socket: Socket | null = null;
  * @param handlers Колбэки для входящих сообщений и ошибок доставки.
  * @returns Активный Socket.IO-клиент.
  */
-export function connectSocket(deviceId: string, handlers: SocketHandlers): Socket {
+export function connectSocket(deviceId: string, sessionToken: string | undefined, handlers: SocketHandlers): Socket {
   if (socket?.connected) {
     return socket;
   }
 
   socket = io(getSocketUrl(), {
     transports: ['websocket'],
+    auth: {
+      token: sessionToken,
+    },
     autoConnect: true,
   });
 

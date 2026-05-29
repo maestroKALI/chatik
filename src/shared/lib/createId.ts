@@ -1,13 +1,17 @@
-﻿/**
- * Создаёт короткий случайный идентификатор.
+﻿import 'react-native-get-random-values';
+
+import { createId as createCuid2 } from '@paralleldrive/cuid2';
+
+/**
+ * Создаёт криптостойкий идентификатор на базе cuid2.
  *
- * Используется для локальных сообщений, чатов и deviceId. Для MVP этого хватает,
- * потому что сервер не хранит историю и не требует криптографически стойких ID.
+ * cuid2 рассчитан на защиту от перебора и коллизий. Необязательный префикс
+ * оставлен только для читаемости локальной БД; случайная часть остаётся cuid2.
  *
- * @param prefix Префикс, который помогает понять назначение идентификатора.
- * @returns Строковый идентификатор с префиксом, временем и случайной частью.
+ * @param prefix Префикс сущности, например `msg` или `device`.
+ * @returns Идентификатор с безопасной случайной частью.
  */
-export function createId(prefix: string): string {
-  const randomPart = Math.random().toString(36).slice(2, 10);
-  return `${prefix}_${Date.now()}_${randomPart}`;
+export function createId(prefix?: string): string {
+  const id = createCuid2();
+  return prefix ? `${prefix}_${id}` : id;
 }

@@ -24,6 +24,8 @@ export interface Message {
   mimeType?: string;
   duration?: number;
   status: MessageStatus;
+  isEncrypted?: boolean;
+  senderPublicKey?: string;
 }
 
 export interface RelayPayload {
@@ -37,4 +39,6 @@ export interface RelayPayload {
   base64Payload?: string;
   mimeType?: string;
   duration?: number;
+  isEncrypted?: boolean;
+  senderPublicKey?: string;
 }

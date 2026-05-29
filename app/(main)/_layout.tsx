@@ -20,6 +20,7 @@ export default function MainLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Chat', tabBarLabel: 'Чат' }} />
+      <Tabs.Screen name="search" options={{ title: 'Search', tabBarLabel: 'Поиск' }} />
       <Tabs.Screen name="calls" options={{ title: 'Calls', tabBarLabel: 'Звонки' }} />
       <Tabs.Screen name="wallet" options={{ title: 'Wallet', tabBarLabel: 'Кошелёк' }} />
       <Tabs.Screen name="channels" options={{ title: 'Channels', tabBarLabel: 'Каналы' }} />

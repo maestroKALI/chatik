@@ -18,6 +18,8 @@ interface MessageRow {
   mimeType?: string | null;
   duration?: number | null;
   status: Message['status'];
+  isEncrypted?: number;
+  senderPublicKey?: string | null;
 }
 
 /**
@@ -74,9 +76,14 @@ export async function initDB(): Promise<void> {
       mimeType TEXT,
       duration INTEGER,
       status TEXT NOT NULL,
+      isEncrypted INTEGER NOT NULL DEFAULT 0,
+      senderPublicKey TEXT,
       FOREIGN KEY (chatId) REFERENCES chats (id) ON DELETE CASCADE
     );
   `);
+
+  await db.execAsync('ALTER TABLE messages ADD COLUMN isEncrypted INTEGER NOT NULL DEFAULT 0;').catch(() => undefined);
+  await db.execAsync('ALTER TABLE messages ADD COLUMN senderPublicKey TEXT;').catch(() => undefined);
 }
 
 /**
@@ -120,8 +127,8 @@ export async function saveMessage(message: Message): Promise<void> {
   await db.runAsync(
     `INSERT OR REPLACE INTO messages (
       id, chatId, sender, recipient, text, type, timestamp, isOutgoing,
-      fileUri, base64Payload, mimeType, duration, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      fileUri, base64Payload, mimeType, duration, status, isEncrypted, senderPublicKey
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       message.id,
       message.chatId,
@@ -136,6 +143,8 @@ export async function saveMessage(message: Message): Promise<void> {
       message.mimeType ?? null,
       message.duration ?? null,
       message.status,
+      message.isEncrypted ? 1 : 0,
+      message.senderPublicKey ?? null,
     ],
   );
 }
@@ -167,6 +176,8 @@ export async function getMessages(chatId: string): Promise<Message[]> {
     mimeType: row.mimeType ?? undefined,
     duration: row.duration ?? undefined,
     status: row.status,
+    isEncrypted: Boolean(row.isEncrypted),
+    senderPublicKey: row.senderPublicKey ?? undefined,
   }));
 }
 

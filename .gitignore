@@ -5,6 +5,7 @@ web-build/
 *.log
 .env
 .env.local
+server/data/
 .DS_Store
 
 # Portable local tools created by Cursor in this environment

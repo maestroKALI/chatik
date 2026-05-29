@@ -1,10 +1,13 @@
-# Messenger MVP
+﻿# Messenger MVP
 
 Собственный кроссплатформенный мессенджер на React Native + Expo. История сообщений хранится только на клиенте в SQLite, сервер выполняет только ретрансляцию онлайн-сообщений и заготовку сигнализации WebRTC.
 
 ## Возможности MVP
 
-- Локальная авторизация без сервера: создаётся `deviceId`, пользователь вводит имя.
+- Регистрация через телефон, пароль и e-mail OTP-заглушку.
+- Приватный E2EE-ключ хранится локально в `expo-secure-store`, на сервер отправляется только публичный ключ.
+- Поиск пользователей по телефону через `/api/users/search`.
+- Защита auth/search endpoint'ов через rate limiting.
 - Тестовый чат `Saved Messages`: сообщения отправляются самому себе через Socket.IO-сервер.
 - SQLite-история сообщений на устройстве.
 - Текстовые сообщения.
@@ -51,7 +54,7 @@ cp server/.env.example server/.env
 npm run server:start
 ```
 
-Сервер запускается на `http://localhost:3000`. Он не хранит историю сообщений, а только ретранслирует события между онлайн-клиентами.
+Сервер запускается на `http://localhost:3000`. Он не хранит историю сообщений, а только хранит учётные записи, публичные ключи, сессии и ретранслирует зашифрованные события между онлайн-клиентами.
 
 ## Локальный запуск клиента
 
@@ -86,7 +89,7 @@ EXPO_PUBLIC_SOCKET_URL=https://your-domain.example
 git clone https://github.com/maestroKALI/chatik.git
 cd chatik/server
 docker build -t chatik-relay .
-docker run -d --name chatik-relay --restart unless-stopped -p 3000:3000 --env-file .env chatik-relay
+docker run -d --name chatik-relay --restart unless-stopped -p 3000:3000 --env-file .env -v chatik-data:/app/data chatik-relay
 ```
 
 Для production обычно ставят Nginx перед контейнером и проксируют WebSocket на `127.0.0.1:3000`.
@@ -94,6 +97,9 @@ docker run -d --name chatik-relay --restart unless-stopped -p 3000:3000 --env-fi
 ## Ограничения MVP
 
 - Сервер не хранит историю и не доставляет сообщения офлайн.
+- OTP e-mail пока является MVP-заглушкой: код возвращается клиенту и пишется в лог сервера вне production.
+- Для production нужно заменить OTP-заглушку на SendGrid/AWS SES или Magic Link/OAuth-подтверждение e-mail.
+- Для горизонтального масштабирования rate limiting лучше перевести на Redis store.
 - Документы пока не передаются: для крупных файлов нужен WebRTC Data Channel или внешнее временное хранилище.
 - `react-native-webrtc` требует custom dev client, поэтому видеозвонки пока показаны как честная заглушка.
 - Лимит base64-медиа в клиенте: 3 МБ.
@@ -101,3 +107,7 @@ docker run -d --name chatik-relay --restart unless-stopped -p 3000:3000 --env-fi
 ## Комментарии к коду
 
 Все функции снабжены JSDoc-комментариями на русском языке, чтобы владелец проекта мог понимать назначение каждого участка кода.
+
+## План безопасности
+
+Подробный план MVP и production-hardening описан в `SECURITY_PLAN.md`.

@@ -18,7 +18,7 @@ export default function IndexScreen() {
   useEffect(() => {
     async function routeByIdentity(): Promise<void> {
       const identity = await getOrCreateIdentity();
-      router.replace(identity.displayName ? '/(main)' : '/(auth)');
+      router.replace(identity.displayName && identity.sessionToken ? '/(main)' : '/(auth)');
     }
 
     void routeByIdentity();
