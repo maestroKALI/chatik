@@ -39,6 +39,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "server": "node server/index.js",
+    "server:install": "npm --prefix server install",
+    "server:start": "npm --prefix server start",
+    "install:all": "npm install && npm --prefix server install",
     "typecheck": "tsc --noEmit"
   },
   "private": true

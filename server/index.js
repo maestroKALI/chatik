@@ -1,19 +1,22 @@
-﻿const express = require('express');
+require('dotenv').config();
+
+const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
 
 const PORT = process.env.PORT || 3000;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
 const app = express();
 const server = http.createServer(app);
 const onlineDevices = new Map();
 
-app.use(cors());
+app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json({ limit: '5mb' }));
 
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: CLIENT_ORIGIN,
     methods: ['GET', 'POST'],
   },
   maxHttpBufferSize: 5e6,

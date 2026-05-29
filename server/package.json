@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "cors": "latest",
+    "dotenv": "latest",
     "express": "latest",
     "messengerapp": "file:..",
     "socket.io": "latest"
